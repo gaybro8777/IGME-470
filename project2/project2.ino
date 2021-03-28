@@ -1,30 +1,11 @@
-/*
- * Resources
- * WM Harris Serial demo Code
- * 
-WM Harris 470.7-2 demo Serial with dfR Mic & Knock sensors 3.10.21
-Read and send mic data ALWAYS
-Checks knock sensor less, and sends KNOCK message if above threshold.
-
-adapted from Knock Sensor and Debounce examples
-
-  If doing an MEAS circuit:
-  - positive connection of the piezo attached to analog in pin
-  - negative connection of the piezo attached to ground
-  - 1 megohm resistor attached from analog in 0 to ground
-  http://www.arduino.cc/en/Tutorial/Knock
-*/
-
-/* Global variables */
-
 /* LED connected to digital pins */
-const int ledPinRed = 6;     
-const int ledPinGreen = 5; 
+const int ledPinRed = 3;     
 const int ledPinWhite = 4; 
+const int ledPinGreen = 5; 
 
 /* Analog Pins */
-const int buttonPin = A2;    
-const int mic = A4; 
+const int buttonPin = 16;    
+const int mic = A3; 
 
 const int threshold = 70;  // threshold value for detected vibration is a knock
 
@@ -35,8 +16,6 @@ unsigned long knockDelay = 10;    // time between knock sensor readings
 // variables will change:
 int buttonState = 0;         // variable for reading the pushbutton status
 int sensorReading = 0;      // variable to store the value read from the sensor pin
-
-int ledState = LOW;         // variable used to store the last LED status, to toggle the light
 
 void setup() {
   //LED Setup
@@ -52,39 +31,50 @@ void loop() {
   // read the mic and always send it to computer:
   Serial.print("Mic Level "); 
   Serial.println(analogRead(mic));
-  
-  sensorReading = analogRead(mic);
 
-  //read the button state 
+  //read analog and digital sensors
+  sensorReading = analogRead(mic);
   buttonState = digitalRead(buttonPin);
 
-
-  // If it is time, read knock sensor and store it:
-  if (millis() - lastKnockTime > knockDelay) {
-    lastKnockTime = millis();
-    sensorReading = analogRead(buttonPin);
-
-    
-    /* if (sensorReading > 20) { //half a knock? noise?
-      Serial.println(sensorReading);
-    }*/
-
-      // check if the pushbutton is pressed. If it is, the buttonState is HIGH:
+    //check for noise
+    if (sensorReading > 20) {
         if (buttonState == HIGH) {
-              if (sensorReading){
+          delay(10);
           // turn LED on:
           digitalWrite(ledPinRed, HIGH);
-          digitalWrite(ledPinGreen, HIGH);          
-          digitalWrite(ledPinWhite, HIGH);    
-              }
-          } 
-        else {
-          // turn LED off:
-          digitalWrite(ledPinRed, LOW);
           digitalWrite(ledPinGreen, LOW);          
-          digitalWrite(ledPinWhite, LOW);    
+          digitalWrite(ledPinWhite, LOW);  
         }
+    } 
+    //check for louder noise
+    else if (sensorReading > 400) {
+        if (buttonState == HIGH) {
+           delay(10);         
+          // turn LED on:
+          digitalWrite(ledPinWhite, HIGH);
+          digitalWrite(ledPinGreen, LOW);          
+          digitalWrite(ledPinRed, LOW);  
+        }
+    }
+    //check for super loud noise
+    else if (sensorReading > 600) {
+         if (buttonState == HIGH) {
+           delay(10);         
+          // turn LED on:
+          digitalWrite(ledPinGreen, HIGH);
+          digitalWrite(ledPinWhite, LOW);          
+          digitalWrite(ledPinRed, LOW);  
+        }
+    }
+    else {
+      // turn LED off:
+      digitalWrite(ledPinRed, LOW);
+      digitalWrite(ledPinGreen, LOW);          
+      digitalWrite(ledPinWhite, LOW);    
+     }
 
+ /* if (millis() - lastKnockTime > knockDelay) {
+    lastKnockTime = millis();
     // if the sensor reading at the threshold:
     if (sensorReading >= threshold) {
       // toggle the status of the ledPin:
@@ -96,5 +86,5 @@ void loop() {
       // delay even more to avoid knock bounciness
       lastKnockTime = lastKnockTime + 60;
     }
-  }
+  }*/
 }
