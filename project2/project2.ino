@@ -9,13 +9,15 @@ const int mic = A3;
 
 const int threshold = 70;  // threshold value for detected vibration is a knock
 
-unsigned long lastKnockTime = 0;  // the last time the knock sensor was read
-unsigned long knockDelay = 10;    // time between knock sensor readings
+//from knock sensor tutorial
+unsigned long lastSensorRead = 0;  // the last time the sensor was read
 
 
 // variables will change:
 int buttonState = 0;         // variable for reading the pushbutton status
 int sensorReading = 0;      // variable to store the value read from the sensor pin
+
+int sensorReadOver = 0;      
 
 void setup() {
   //LED Setup
@@ -23,48 +25,55 @@ void setup() {
   pinMode(ledPinGreen, OUTPUT);
   pinMode(ledPinWhite, OUTPUT);
 
+  pinMode(buttonPin, INPUT);
+  
   // use the serial port
   Serial.begin(9600);      
 }
 
 void loop() {
-  // read the mic and always send it to computer:
-  Serial.print("Mic Level "); 
-  Serial.println(analogRead(mic));
-
   //read analog and digital sensors
   sensorReading = analogRead(mic);
   buttonState = digitalRead(buttonPin);
+          digitalWrite(ledPinGreen, HIGH);       
+   sensorReadOver = analogRead(sensorReading);
+    
+  // read the mic and always send it to computer:
+  Serial.print("Mic Level "); 
 
-    //check for noise
-    if (sensorReading > 20) {
-        if (buttonState == HIGH) {
+    Serial.println(analogRead(sensorReading));
+     
+    if (buttonState == HIGH) {
+        //check for noise
+        if (sensorReadOver > 20 && sensorReadOver < 400) {
           delay(10);
+          Serial.print("Red Low Noise"); 
+          Serial.println(analogRead(sensorReadOver));    
           // turn LED on:
-          digitalWrite(ledPinRed, HIGH);
-          digitalWrite(ledPinGreen, LOW);          
+ 
+          digitalWrite(ledPinGreen, HIGH);          
           digitalWrite(ledPinWhite, LOW);  
         }
-    } 
-    //check for louder noise
-    else if (sensorReading > 400) {
-        if (buttonState == HIGH) {
-           delay(10);         
+        //check for louder noise
+        else if (sensorReadOver > 430 && sensorReadOver < 500) {
+          delay(10);
+          Serial.print("White some Noise");  
+          Serial.println(analogRead(sensorReadOver));    
           // turn LED on:
-          digitalWrite(ledPinWhite, HIGH);
-          digitalWrite(ledPinGreen, LOW);          
+
+          digitalWrite(ledPinGreen, HIGH);          
           digitalWrite(ledPinRed, LOW);  
         }
-    }
-    //check for super loud noise
-    else if (sensorReading > 600) {
-         if (buttonState == HIGH) {
-           delay(10);         
+         //check for super loud noise
+         else if (sensorReadOver > 500) {
+          // delay(10);      
+          Serial.print("Green Loud!");  
+          Serial.println(analogRead(sensorReadOver)); 
           // turn LED on:
           digitalWrite(ledPinGreen, HIGH);
           digitalWrite(ledPinWhite, LOW);          
           digitalWrite(ledPinRed, LOW);  
-        }
+         }
     }
     else {
       // turn LED off:
@@ -73,18 +82,6 @@ void loop() {
       digitalWrite(ledPinWhite, LOW);    
      }
 
- /* if (millis() - lastKnockTime > knockDelay) {
-    lastKnockTime = millis();
-    // if the sensor reading at the threshold:
-    if (sensorReading >= threshold) {
-      // toggle the status of the ledPin:
-      ledState = !ledState;
-      // update the LED pin itself:
-      digitalWrite(ledPinRed, ledState);
-      // send the string "Knock!" to the computer
-      Serial.println("Button Pressed!");
-      // delay even more to avoid knock bounciness
-      lastKnockTime = lastKnockTime + 60;
-    }
-  }*/
+
+
 }
